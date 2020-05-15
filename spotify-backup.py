@@ -123,7 +123,9 @@ def main():
 	parser.add_argument('--token', metavar='OAUTH_TOKEN', help='use a Spotify OAuth token (requires the '
 	                                           + '`playlist-read-private` permission)')
 	parser.add_argument('--format', default='txt', choices=['json', 'txt'], help='output format (default: txt)')
+	parser.add_argument("--minimal", default=False, action="store_true" , help="remove unnecessary information from json")
 	parser.add_argument('file', help='output filename', nargs='?')
+
 	args = parser.parse_args()
 	
 	# If they didn't give a filename, then just prompt them. (They probably just double-clicked.)
@@ -150,7 +152,22 @@ def main():
 	with open(args.file, 'w', encoding='utf-8') as f:
 		# JSON file.
 		if args.format == 'json':
-			json.dump(playlists, f)
+			if args.minimal:
+				obj={}
+				for playlist in playlists:
+					p=[]
+					for track in playlist['tracks']:
+						t={
+							'name': track['track']['name'],
+							'artists': [x['name'] for x in track['track']['artists']],
+							'album': track['track']['album']['name'],
+							'uri': track['track']['uri'],
+						}
+						p.append(t)
+					obj[playlist['name']]=p
+				json.dump(obj, f, indent=2)
+			else:
+				json.dump(playlists, f)
 		
 		# Tab-separated file.
 		elif args.format == 'txt':
